@@ -1,5 +1,148 @@
 import React, { useState, useEffect } from "react";
 
+// Mobile Landing Page Component for Scanned QR Codes
+function QRScanLandingPage({ qrCodeId, onBack }) {
+  const [scanData, setScanData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (qrCodeId) {
+      fetchScanData(qrCodeId);
+    }
+  }, [qrCodeId]);
+
+  const fetchScanData = async (qrId) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `https://ecorewards-deploy.vercel.app/api/v1/qr/scan/${qrId}`
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        setScanData(result.data);
+      } else {
+        setError("QR Code not found or invalid");
+      }
+    } catch (err) {
+      setError("Error loading QR code data: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading reward details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Oops!</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={onBack}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-xl transition duration-200"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!scanData) return null;
+
+  const { qrCode, partner, reward, userInfo } = scanData;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
+        <div className="flex items-center justify-between p-4">
+          <button
+            onClick={onBack}
+            className="text-gray-600 hover:text-gray-800 transition duration-200"
+          >
+            ← Back
+          </button>
+          <div className="text-sm text-gray-600">
+            Scanned: {qrCode.scanCount} times
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 pb-8">
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4">🌱</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Welcome to {partner.name}!
+          </h1>
+          <p className="text-gray-600 text-lg">
+            You've discovered an eco-reward opportunity
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 p-6 text-white">
+            <h2 className="text-xl font-bold mb-2">{partner.name}</h2>
+            <p className="text-green-100 capitalize mb-2">
+              📍 {partner.category}
+            </p>
+            <p className="text-sm opacity-90">{partner.description}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 text-white">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">🎁 Available Reward</h3>
+              <div className="bg-white/20 px-3 py-1 rounded-full">
+                <span className="text-sm font-medium">
+                  {reward.points} points
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <h4 className="text-xl font-bold text-gray-800 mb-3">
+              {reward.title}
+            </h4>
+            <p className="text-gray-600 mb-4">{reward.description}</p>
+
+            {userInfo.isAuthenticated ? (
+              <button className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition duration-200 text-lg">
+                🎉 Claim {reward.points} Points Now!
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <button className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition duration-200 text-lg">
+                  🚀 Sign Up to Claim Reward
+                </button>
+                <button className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-xl border-2 border-gray-200 transition duration-200">
+                  🔑 Sign In
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // QR Code Display Component
 function QRCodeDisplay({ qrData }) {
   if (!qrData) {
