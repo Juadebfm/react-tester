@@ -338,6 +338,16 @@ function App() {
   const [currentView, setCurrentView] = useState("generator"); // 'generator' or 'scan'
   const [testQRId, setTestQRId] = useState("");
 
+  // Check if URL contains scan route
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith("/scan/")) {
+      const qrId = path.replace("/scan/", "");
+      setTestQRId(qrId);
+      setCurrentView("scan");
+    }
+  }, []);
+
   const handleQRGenerated = (qrData) => {
     setGeneratedQR(qrData);
   };
@@ -345,11 +355,15 @@ function App() {
   const showScanPage = (qrId) => {
     setTestQRId(qrId);
     setCurrentView("scan");
+    // Update URL without page reload
+    window.history.pushState({}, "", `/scan/${qrId}`);
   };
 
   const backToGenerator = () => {
     setCurrentView("generator");
     setTestQRId("");
+    // Update URL back to home
+    window.history.pushState({}, "", "/");
   };
 
   // If viewing scan page, show the mobile landing page
